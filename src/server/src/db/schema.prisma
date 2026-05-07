@@ -1,0 +1,17 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Player {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  isOnline  Boolean  @default(false)
+  x         Float    @default(100)
+  y         Float    @default(100)
+  createdAt DateTime @default(now())
+}
