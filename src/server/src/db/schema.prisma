@@ -1,5 +1,5 @@
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -8,8 +8,10 @@ generator client {
 }
 
 model Player {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  // PostgreSQL uses uuid() or autoincrement() instead of ObjectId
+  id        String   @id @default(uuid()) 
   username  String   @unique
+  score     Int      @default(0)     // Added this so your scores sync!
   isOnline  Boolean  @default(false)
   x         Float    @default(100)
   y         Float    @default(100)
