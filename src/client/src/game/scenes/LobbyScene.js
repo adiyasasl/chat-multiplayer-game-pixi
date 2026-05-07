@@ -3,6 +3,7 @@ import { CoinEntity } from '../entities/CoinEntity.js';
 import { SpawnerEntity } from '../entities/SpawnerEntity.js';
 import { gqlClient } from '../managers/GraphQLClient.js';
 import { networkManager } from '../managers/NetworkManager.js';
+import { TilingSprite, Texture } from 'pixi.js';
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -12,6 +13,7 @@ export class LobbyScene {
     this.playerEntities = new Map();
     this.keys = new Set();
     this.coins = []; // ADD THIS: Create an array to track active coins
+    this.background = new TilingSprite(Texture.from('/assets/Gray.png'), this.app.screen.width, this.app.screen.height);
 
     this.coinSpawnTimer = 0;
     this.coinSpawnInterval = 2000; // Time in milliseconds (2000ms = 2 seconds)

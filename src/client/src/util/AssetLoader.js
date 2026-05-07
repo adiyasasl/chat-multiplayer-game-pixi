@@ -2,6 +2,7 @@
 import { Assets } from 'pixi.js';
 import idleImage from '../assets/Idle.png';
 import walkImage from '../assets/Run.png';
+import bgImage from '../assets/Gray.png';
 
 export const AssetLoader = {
     async loadAssets() {
@@ -9,7 +10,8 @@ export const AssetLoader = {
         // Here we simulate loading time for procedural graphics
         await Assets.load([
             { alias: 'idle', src: idleImage },
-            { alias: 'walk', src: walkImage }
+            { alias: 'walk', src: walkImage },
+            { alias: 'bg', src: bgImage }
         ]);
         return new Promise(resolve => setTimeout(resolve, 500)); 
     }
