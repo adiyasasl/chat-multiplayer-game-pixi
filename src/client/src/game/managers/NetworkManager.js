@@ -6,7 +6,7 @@ class NetworkManager {
   }
 
   connect(playerId) {
-    this.ws = new WebSocket('ws://localhost:4000');
+    this.ws = new WebSocket('ws://chat-multiplayer-game-pixi.onrender.com');
     
     this.ws.onopen = () => {
       // Send initial join payload (Like OnClientConnect)

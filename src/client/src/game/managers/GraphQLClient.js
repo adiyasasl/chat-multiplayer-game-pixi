@@ -1,7 +1,7 @@
 // GraphQLClient.js — Like a Unity API Service Singleton
 class GraphQLClient {
   constructor() {
-    this.endpoint = 'http://localhost:4000/graphql';
+    this.endpoint = 'https://chat-multiplayer-game-pixi.onrender.com/graphql';
   }
 
   async request(query, variables = {}) {
