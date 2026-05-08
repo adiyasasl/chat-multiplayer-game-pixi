@@ -1,5 +1,5 @@
-// GameApp.js — Your GameManager / SceneManager
-import { Application, Sprite, Assets } from 'pixi.js'; // Added Sprite and Assets
+// GameApp.js
+import { Application, Sprite, Assets } from 'pixi.js';
 import { LoginScene } from './scenes/LoginScene.js';
 import { LobbyScene } from './scenes/LobbyScene.js';
 import { AssetLoader } from '../util/AssetLoader.js';
@@ -9,38 +9,66 @@ class GameApp {
     this.app = null;
     this.currentSceneInstance = null;
     this.callbacks = {};
-    this.backgroundSprite = null; // Store a reference to the background
+    this.backgroundSprite = null;
   }
 
-  // Like Unity's Awake()
   async init(container, callbacks) {
-    // Load assets before starting the first scene
     await AssetLoader.loadAssets();
     
     this.callbacks = callbacks;
     this.app = new Application();
     
-    // PixiJS 8 requires async init
     await this.app.init({ background: '#1a1a2e', resizeTo: window });
     container.appendChild(this.app.canvas);
 
-    // --- Add the Global Background ---
-    // Grab the texture using the alias defined in your AssetLoader
+    // --- Setup Global Background ---
     const bgTexture = Assets.get('bg'); 
     this.backgroundSprite = new Sprite(bgTexture);
     
-    // Scale the background to fill the initial screen size
-    this.backgroundSprite.width = this.app.screen.width;
-    this.backgroundSprite.height = this.app.screen.height;
-
-    // Add it to the main stage FIRST so it renders behind all scenes
+    // 1. Set anchor to the center of the sprite so it scales outward evenly
+    this.backgroundSprite.anchor.set(0.5);
+    
     this.app.stage.addChild(this.backgroundSprite);
+
+    // 2. Call our new resize function for the initial setup
+    this.resizeBackground();
+
+    // 3. Listen for window resizes and update the background
+    window.addEventListener('resize', () => {
+        this.resizeBackground();
+    });
     // ----------------------------------
 
     this.switchScene('login');
   }
 
-  // Like SceneManager.LoadScene()
+  // --- New Method: Handle Aspect Ratio Scaling ---
+  resizeBackground() {
+    if (!this.backgroundSprite || !this.app) return;
+
+    const screenWidth = this.app.screen.width;
+    const screenHeight = this.app.screen.height;
+
+    // Get the original dimensions of your background image
+    const textureWidth = this.backgroundSprite.texture.width;
+    const textureHeight = this.backgroundSprite.texture.height;
+
+    // Calculate how much we need to scale on each axis to fill the screen
+    const scaleX = screenWidth / textureWidth;
+    const scaleY = screenHeight / textureHeight;
+
+    // Use Math.max to ensure the background covers the entire screen (Cover method)
+    // If you want the whole image to always be visible (Contain method), use Math.min instead
+    const scale = Math.max(scaleX, scaleY);
+
+    // Apply the uniform scale
+    this.backgroundSprite.scale.set(scale);
+
+    // Keep the background perfectly centered in the window
+    this.backgroundSprite.x = screenWidth / 2;
+    this.backgroundSprite.y = screenHeight / 2;
+  }
+
   async switchScene(sceneName, data = null) {
     if (this.currentSceneInstance) {
       this.currentSceneInstance.destroy();
@@ -54,8 +82,6 @@ class GameApp {
       this.currentSceneInstance = new LobbyScene(this, data);
     }
 
-    // Ensure scenes add their containers to this.app.stage
-    // so they render ON TOP of the global background Sprite.
     await this.currentSceneInstance.init();
   }
 }
