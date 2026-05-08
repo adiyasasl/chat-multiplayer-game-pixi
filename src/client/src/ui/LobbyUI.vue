@@ -21,7 +21,7 @@ defineProps({ players: Array });
 .ui-overlay { position: absolute; inset: 0; pointer-events: none; }
 .player-list { 
   position: absolute; top: 10px; right: 10px; 
-  /* background: rgba(0,0,0,0.7); color: white; padding: 1rem;  */
+  background: rgba(0,0,0,0.7); color: white; padding: 1rem; 
   font-family: monospace; border: 1px solid #444; 
   pointer-events: auto; min-width: 200px; /* Made slightly wider */
 }
