@@ -2,7 +2,7 @@
 import { Assets } from 'pixi.js';
 import idleImage from '../assets/Idle.png';
 import walkImage from '../assets/Run.png';
-import bgImage from '../assets/Gray.png';
+import bgImage from '../assets/map.png';
 
 export const AssetLoader = {
     async loadAssets() {

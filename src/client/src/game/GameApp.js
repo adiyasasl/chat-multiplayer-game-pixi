@@ -26,15 +26,15 @@ class GameApp {
 
     // --- Add the Global Background ---
     // Grab the texture using the alias defined in your AssetLoader
-    // const bgTexture = Assets.get('bg'); 
-    // this.backgroundSprite = new Sprite(bgTexture);
+    const bgTexture = Assets.get('bg'); 
+    this.backgroundSprite = new Sprite(bgTexture);
     
-    // // Scale the background to fill the initial screen size
-    // this.backgroundSprite.width = this.app.screen.width;
-    // this.backgroundSprite.height = this.app.screen.height;
+    // Scale the background to fill the initial screen size
+    this.backgroundSprite.width = this.app.screen.width;
+    this.backgroundSprite.height = this.app.screen.height;
 
-    // // Add it to the main stage FIRST so it renders behind all scenes
-    // this.app.stage.addChild(this.backgroundSprite);
+    // Add it to the main stage FIRST so it renders behind all scenes
+    this.app.stage.addChild(this.backgroundSprite);
     // ----------------------------------
 
     this.switchScene('login');
