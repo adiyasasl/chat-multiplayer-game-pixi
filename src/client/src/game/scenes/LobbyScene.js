@@ -67,6 +67,7 @@ export class LobbyScene {
     networkManager.on("player_left", (data) => {
       this.removePlayer(data.playerId);
       this.updateVueHUD();
+      this.evaluateLeader(); // ADD THIS
     });
 
     networkManager.on("player_moved", (data) => {
@@ -82,6 +83,7 @@ export class LobbyScene {
       const entity = this.playerEntities.get(data.playerId);
       if (entity && entity.scoreManager) {
         entity.scoreManager.state.score = data.score;
+        this.evaluateLeader(); // ADD THIS
       }
     });
 
@@ -177,6 +179,29 @@ export class LobbyScene {
       };
     });
     this.gameManager.callbacks.onPlayersUpdate(playersList);
+  }
+
+  evaluateLeader() {
+    let highestScore = 0;
+    let leaderId = null;
+
+    // 1. Find the highest score (Must be at least 1 point to get a crown!)
+    this.playerEntities.forEach((entity) => {
+      const score = entity.scoreManager ? entity.scoreManager.state.score : 0;
+      if (score > highestScore && score > 0) {
+        highestScore = score;
+        leaderId = entity.id;
+      }
+    });
+
+    // 2. Give the crown to the winner, take it from everyone else
+    this.playerEntities.forEach((entity) => {
+      if (entity.id === leaderId && leaderId !== null) {
+        entity.setCrown(true);
+      } else {
+        entity.setCrown(false);
+      }
+    });
   }
 
   destroy() {

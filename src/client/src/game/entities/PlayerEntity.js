@@ -37,6 +37,14 @@ export class PlayerEntity {
     this.nameText.anchor.set(0.5);
     this.nameText.y = -35;
 
+    // --- ADD THIS CROWN CODE ---
+    this.crown = new Text({ text: '👑', style: { fontSize: 24 } });
+    this.crown.anchor.set(0.5);
+    this.crown.y = -60; // Place it above their name
+    this.crown.visible = false; // Hidden by default
+    this.container.addChild(this.crown);
+    // ---------------------------
+
     this.container.addChild(this.graphics);
     this.container.addChild(this.nameText);
 
@@ -255,6 +263,11 @@ export class PlayerEntity {
   setTargetPosition(x, y) {
     this.targetX = x;
     this.targetY = y;
+  }
+
+  // Add this new method
+  setCrown(isLeader) {
+    this.crown.visible = isLeader;
   }
 
   destroy() {
