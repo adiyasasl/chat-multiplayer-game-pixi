@@ -1,8 +1,8 @@
 import { AnimatedSprite, Container, Graphics, Text, TextStyle, Assets, Spritesheet } from 'pixi.js';
-import { CoinEntity } from './CoinEntity';
 import { ScoreManager } from '../managers/ScoreManager';
 import { Collision } from '../../util/Collision';
 import { networkManager } from '../managers/NetworkManager';
+import { Viewport } from 'pixi-viewport';
 
 export class PlayerEntity {
   constructor(playerData, isLocal = false) {
@@ -13,6 +13,14 @@ export class PlayerEntity {
     
     this.targetX = playerData.x || 400;
     this.targetY = playerData.y || 300;
+
+    this.Viewport = new Viewport({
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight,
+      worldWidth: 2000,
+      worldHeight: 2000,
+      interaction: networkManager.app.renderer.plugins.interaction
+    });
 
     this.container = new Container();
     this.container.x = this.targetX;
@@ -57,6 +65,8 @@ export class PlayerEntity {
     this.baseScale = 2; // Your default sprite scale
     this.juiceTimer = 0; // Tracks the animation time
     this.juiceDuration = 150; // How long the pop lasts in milliseconds
+
+    this.Viewport.drag().pinch().wheel().follow(this.graphics);
   }
 
   async init() {
