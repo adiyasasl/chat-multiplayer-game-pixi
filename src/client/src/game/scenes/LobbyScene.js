@@ -101,12 +101,15 @@ export class LobbyScene {
       this.coinSpawnTimer = 0;
     }
 
-    // Safely get joystick axis (defaults to 0,0 if not touched)
+    // Grab the axis data from the joystick
     const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
+    
+    // ADD THIS: Package the screen dimensions into an object
+    const bounds = { width: this.app.screen.width, height: this.app.screen.height };
 
     this.playerEntities.forEach((entity) => {
-      // Pass the joystick axis as the 4th parameter
-      const didLocalMove = entity.update(ticker, this.keys, this.coins, axis);
+      // Pass 'bounds' as the 5th parameter
+      const didLocalMove = entity.update(ticker, this.keys, this.coins, axis, bounds);
 
       if (didLocalMove && networkManager.ws.readyState === WebSocket.OPEN) {
         networkManager.ws.send(

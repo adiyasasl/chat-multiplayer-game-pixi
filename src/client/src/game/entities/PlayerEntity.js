@@ -103,7 +103,7 @@ export class PlayerEntity {
   }
 
   // Accepts the new joystickAxis parameter, defaults to 0
-  update(ticker, keys, coins, joystickAxis = { x: 0, y: 0 }) {
+  update(ticker, keys, coins, joystickAxis = { x: 0, y: 0 }, bounds = { width: 2000, height: 2000 }) {
     if (this.isLocal) {
       let moved = false;
       let moveX = 0;
@@ -143,10 +143,26 @@ export class PlayerEntity {
       }
       // ----------------------------------------------------
 
-      // 4. Apply Movement & Visuals
+      // 4. Apply Movement & Clamping
       if (moveX !== 0 || moveY !== 0) {
+        // Apply the speed
         this.container.x += moveX * this.speed;
         this.container.y += moveY * this.speed;
+
+        // --- ADD THIS: BOUNDARY CLAMPING ---
+        // Padding prevents half the frog from clipping through the wall before stopping.
+        // 30 is roughly half the width of your scaled sprite. Adjust if needed!
+        const padding = 30; 
+
+        // Clamp X (Left and Right walls)
+        if (this.container.x < padding) this.container.x = padding;
+        if (this.container.x > bounds.width - padding) this.container.x = bounds.width - padding;
+
+        // Clamp Y (Top and Bottom walls)
+        if (this.container.y < padding) this.container.y = padding;
+        if (this.container.y > bounds.height - padding) this.container.y = bounds.height - padding;
+        // -----------------------------------
+
         moved = true;
 
         // Flip the sprite direction based on movement, using currentScale!
