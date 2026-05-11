@@ -3,8 +3,8 @@ import { CoinEntity } from "../entities/CoinEntity.js";
 import { SpawnerEntity } from "../entities/SpawnerEntity.js";
 import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
-import { TilingSprite, Texture } from "pixi.js";
-import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
+import { TilingSprite, Texture, Container } from "pixi.js"; // IMPORT Container
+import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; 
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -14,16 +14,27 @@ export class LobbyScene {
     this.playerEntities = new Map();
     this.keys = new Set();
     this.coins = [];
+
+    // --- CAMERA SETUP ---
+    // 1. World Container (Moves around)
+    this.worldContainer = new Container();
+    // 2. UI Container (Stays fixed on screen)
+    this.uiContainer = new Container();
+
+    // Map Dimensions (Make this larger than your screen so the camera can pan)
+    this.mapWidth = 2000;
+    this.mapHeight = 2000;
+
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
-      this.app.screen.width,
-      this.app.screen.height,
+      this.mapWidth,   // Make background span the whole map
+      this.mapHeight,
     );
+    // Add background to world
+    this.worldContainer.addChild(this.background);
 
     this.coinSpawnTimer = 0;
     this.coinSpawnInterval = 500;
-
-    // Joystick reference
     this.joystick = null;
 
     this.handleKeyDown = (e) => {
@@ -40,6 +51,10 @@ export class LobbyScene {
   }
 
   async init() {
+    // Add containers to the main stage
+    this.app.stage.addChild(this.worldContainer);
+    this.app.stage.addChild(this.uiContainer);
+
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
 
@@ -51,9 +66,9 @@ export class LobbyScene {
     this.spawnSpawner();
     this.updateVueHUD();
 
-    // Initialize Virtual Joystick
+    // Add Virtual Joystick to the UI Container
     this.joystick = new VirtualJoystick(this.app, 60);
-    this.app.stage.addChild(this.joystick);
+    this.uiContainer.addChild(this.joystick);
 
     networkManager.connect(this.localPlayerData.id);
 
@@ -67,7 +82,7 @@ export class LobbyScene {
     networkManager.on("player_left", (data) => {
       this.removePlayer(data.playerId);
       this.updateVueHUD();
-      this.evaluateLeader(); // ADD THIS
+      this.evaluateLeader(); 
     });
 
     networkManager.on("player_moved", (data) => {
@@ -83,7 +98,7 @@ export class LobbyScene {
       const entity = this.playerEntities.get(data.playerId);
       if (entity && entity.scoreManager) {
         entity.scoreManager.state.score = data.score;
-        this.evaluateLeader(); // ADD THIS
+        this.evaluateLeader(); 
       }
     });
 
@@ -103,14 +118,12 @@ export class LobbyScene {
       this.coinSpawnTimer = 0;
     }
 
-    // Grab the axis data from the joystick
     const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
     
-    // ADD THIS: Package the screen dimensions into an object
-    const bounds = { width: this.app.screen.width, height: this.app.screen.height };
+    // Pass the actual map size to bounds, NOT the screen size
+    const bounds = { width: this.mapWidth, height: this.mapHeight };
 
     this.playerEntities.forEach((entity) => {
-      // Pass 'bounds' as the 5th parameter
       const didLocalMove = entity.update(ticker, this.keys, this.coins, axis, bounds);
 
       if (didLocalMove && networkManager.ws.readyState === WebSocket.OPEN) {
@@ -132,6 +145,30 @@ export class LobbyScene {
         this.coins.splice(i, 1);
       }
     }
+
+    // --- CAMERA LOGIC ---
+    const localPlayer = this.playerEntities.get(this.localPlayerData.id);
+    
+    if (localPlayer) {
+      // 1. Calculate where the camera should be so the player is centered
+      const targetCamX = (this.app.screen.width / 2) - localPlayer.container.x;
+      const targetCamY = (this.app.screen.height / 2) - localPlayer.container.y;
+
+      // 2. Smoothly move the world container (Lerp)
+      const cameraLerpSpeed = 0.1 * ticker.deltaTime;
+      this.worldContainer.x += (targetCamX - this.worldContainer.x) * cameraLerpSpeed;
+      this.worldContainer.y += (targetCamY - this.worldContainer.y) * cameraLerpSpeed;
+
+      // 3. Clamp camera to Map Bounds (Prevents seeing outside the map background)
+      if (this.worldContainer.x > 0) this.worldContainer.x = 0;
+      if (this.worldContainer.y > 0) this.worldContainer.y = 0;
+
+      const minCamX = this.app.screen.width - this.mapWidth;
+      const minCamY = this.app.screen.height - this.mapHeight;
+
+      if (this.worldContainer.x < minCamX) this.worldContainer.x = minCamX;
+      if (this.worldContainer.y < minCamY) this.worldContainer.y = minCamY;
+    }
   }
 
   spawnPlayer(playerData, isLocal) {
@@ -142,24 +179,26 @@ export class LobbyScene {
       entity.scoreManager.state.score = playerData.score;
     }
 
-    this.app.stage.addChild(entity.container);
+    // Add to WORLD container instead of app.stage
+    this.worldContainer.addChild(entity.container);
     this.playerEntities.set(playerData.id, entity);
     console.log(`Player ${playerData.username} has joined the lobby!`);
     entity.init();
   }
 
   spawnCoin() {
-    const coin = new CoinEntity(this.app.screen.width, this.app.screen.height);
-    this.app.stage.addChild(coin.container);
+    // Pass map dimensions to the coin so they spawn everywhere in the world
+    const coin = new CoinEntity(this.mapWidth, this.mapHeight);
+    
+    // Add to WORLD container instead of app.stage
+    this.worldContainer.addChild(coin.container);
     this.coins.push(coin);
   }
 
   spawnSpawner() {
-    const spawner = new SpawnerEntity(
-      this.app.screen.width,
-      this.app.screen.height,
-    );
-    this.app.stage.addChild(spawner.container);
+    const spawner = new SpawnerEntity(this.mapWidth, this.mapHeight);
+    // Add to WORLD container instead of app.stage
+    this.worldContainer.addChild(spawner.container);
   }
 
   removePlayer(playerId) {
@@ -176,7 +215,7 @@ export class LobbyScene {
         id: e.id,
         username: e.username,
         scoreState: e.scoreManager ? e.scoreManager.state : { score: 0 },
-        isLocal: e.isLocal // <-- ADD THIS LINE
+        isLocal: e.isLocal
       };
     });
     this.gameManager.callbacks.onPlayersUpdate(playersList);
@@ -186,7 +225,6 @@ export class LobbyScene {
     let highestScore = 0;
     let leaderId = null;
 
-    // 1. Find the highest score (Must be at least 1 point to get a crown!)
     this.playerEntities.forEach((entity) => {
       const score = entity.scoreManager ? entity.scoreManager.state.score : 0;
       if (score > highestScore && score > 0) {
@@ -195,7 +233,6 @@ export class LobbyScene {
       }
     });
 
-    // 2. Give the crown to the winner, take it from everyone else
     this.playerEntities.forEach((entity) => {
       if (entity.id === leaderId && leaderId !== null) {
         entity.setCrown(true);
@@ -213,7 +250,6 @@ export class LobbyScene {
     this.playerEntities.forEach((entity) => entity.destroy());
     this.playerEntities.clear();
 
-    // Clean up joystick if scene is destroyed
     if (this.joystick) {
       this.joystick.destroy({ children: true });
     }
