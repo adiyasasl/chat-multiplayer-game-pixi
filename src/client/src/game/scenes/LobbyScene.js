@@ -3,7 +3,7 @@ import { CoinEntity } from "../entities/CoinEntity.js";
 import { SpawnerEntity } from "../entities/SpawnerEntity.js";
 import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
-import { TilingSprite, Texture, Container } from "pixi.js"; // IMPORT Container
+import { Sprite, Texture, Container } from "pixi.js"; // IMPORT Container
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; 
 
 export class LobbyScene {
@@ -22,14 +22,15 @@ export class LobbyScene {
     this.uiContainer = new Container();
 
     // Map Dimensions (Make this larger than your screen so the camera can pan)
-    this.mapWidth = 2000;
-    this.mapHeight = 2000;
+    this.mapWidth = 4000;
+    this.mapHeight = 4000;
 
-    this.background = new TilingSprite(
-      Texture.from("/assets/Gray.png"),
-      this.app.screen.width,   // Make background span the whole map
-      this.app.screen.height,
+    this.background = new Sprite(
+      Texture.from("/assets/Gray.png")
     );
+
+    this.background.width = this.mapWidth;
+    this.background.height = this.mapHeight;
 
     // Add background to world
     // this.worldContainer.addChild(this.background);
