@@ -4,6 +4,7 @@ import { SpawnerEntity } from "../entities/SpawnerEntity.js";
 import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
 import { TilingSprite, Texture } from "pixi.js";
+import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -12,7 +13,7 @@ export class LobbyScene {
     this.localPlayerData = data.localPlayer;
     this.playerEntities = new Map();
     this.keys = new Set();
-    this.coins = []; // ADD THIS: Create an array to track active coins
+    this.coins = [];
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
       this.app.screen.width,
@@ -20,10 +21,11 @@ export class LobbyScene {
     );
 
     this.coinSpawnTimer = 0;
-    this.coinSpawnInterval = 500; // Time in milliseconds (500ms = 0.5 seconds)
+    this.coinSpawnInterval = 500;
 
-    // UPDATED: Ignore input if the user is typing in the chat box!
-    // (Like Unity's EventSystem.current.currentSelectedGameObject)
+    // Joystick reference
+    this.joystick = null;
+
     this.handleKeyDown = (e) => {
       if (e.target.tagName.toLowerCase() === "input") return;
       this.keys.add(e.key.toLowerCase());
@@ -45,9 +47,15 @@ export class LobbyScene {
     activePlayers.forEach((p) => {
       this.spawnPlayer(p, p.id === this.localPlayerData.id);
     });
-    this.spawnCoin(); // Spawn a coin whenever a new player joins
-    this.spawnSpawner(); // Spawn a spawner in the lobby
+    this.spawnCoin();
+    this.spawnSpawner();
     this.updateVueHUD();
+
+    // Initialize Virtual Joystick
+    this.joystick = new VirtualJoystick(60);
+    this.joystick.x = 100;
+    this.joystick.y = this.app.screen.height - 100;
+    this.app.stage.addChild(this.joystick);
 
     networkManager.connect(this.localPlayerData.id);
 
@@ -68,15 +76,12 @@ export class LobbyScene {
       if (entity && !entity.isLocal) entity.setTargetPosition(data.x, data.y);
     });
 
-    // NEW: Listen for incoming chat messages (ClientRpc)
     networkManager.on("chat_message", (data) => {
       this.gameManager.callbacks.onChatMessage(data);
     });
 
     networkManager.on("score_update", (data) => {
-      // Find the remote player who just scored
       const entity = this.playerEntities.get(data.playerId);
-
       if (entity && entity.scoreManager) {
         entity.scoreManager.state.score = data.score;
       }
@@ -85,7 +90,6 @@ export class LobbyScene {
     this.app.ticker.add(this.updateLoop);
   }
 
-  // NEW: Send a chat message to the server (ServerRpc)
   sendChat(text) {
     if (networkManager.ws && networkManager.ws.readyState === WebSocket.OPEN) {
       networkManager.ws.send(JSON.stringify({ type: "chat", text }));
@@ -99,9 +103,12 @@ export class LobbyScene {
       this.coinSpawnTimer = 0;
     }
 
+    // Safely get joystick axis (defaults to 0,0 if not touched)
+    const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
+
     this.playerEntities.forEach((entity) => {
-      // Pass 'this.coins' as the third argument
-      const didLocalMove = entity.update(ticker, this.keys, this.coins);
+      // Pass the joystick axis as the 4th parameter
+      const didLocalMove = entity.update(ticker, this.keys, this.coins, axis);
 
       if (didLocalMove && networkManager.ws.readyState === WebSocket.OPEN) {
         networkManager.ws.send(
@@ -114,18 +121,12 @@ export class LobbyScene {
       }
     });
 
-    // Note: We loop backwards (from the end of the array to the start).
-    // This is the safest way to iterate through an array when you might be deleting items from it!
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i];
-
-      // Move the coin
       coin.update(ticker);
-
-      // Check if the coin flew off-screen
       if (coin.isDead) {
-        coin.destroy(); // Remove visual from Pixi
-        this.coins.splice(i, 1); // Remove from our array tracking
+        coin.destroy();
+        this.coins.splice(i, 1);
       }
     }
   }
@@ -134,27 +135,20 @@ export class LobbyScene {
     if (this.playerEntities.has(playerData.id)) return;
     const entity = new PlayerEntity(playerData, isLocal);
 
-    // --- ADD THIS ---
-    // If the server sends an initial score, set it right away
     if (playerData.score !== undefined && entity.scoreManager) {
       entity.scoreManager.state.score = playerData.score;
     }
 
     this.app.stage.addChild(entity.container);
     this.playerEntities.set(playerData.id, entity);
-
     console.log(`Player ${playerData.username} has joined the lobby!`);
-
     entity.init();
   }
 
   spawnCoin() {
-    // Pass the screen width and height to the constructor!
     const coin = new CoinEntity(this.app.screen.width, this.app.screen.height);
     this.app.stage.addChild(coin.container);
     this.coins.push(coin);
-
-    console.log("A new moving coin has spawned!");
   }
 
   spawnSpawner() {
@@ -163,7 +157,6 @@ export class LobbyScene {
       this.app.screen.height,
     );
     this.app.stage.addChild(spawner.container);
-    console.log("A new spawner has been created in the lobby!");
   }
 
   removePlayer(playerId) {
@@ -179,11 +172,9 @@ export class LobbyScene {
       return {
         id: e.id,
         username: e.username,
-        // Pass the entire reactive state object directly!
         scoreState: e.scoreManager ? e.scoreManager.state : { score: 0 },
       };
     });
-
     this.gameManager.callbacks.onPlayersUpdate(playersList);
   }
 
@@ -194,5 +185,10 @@ export class LobbyScene {
     networkManager.disconnect();
     this.playerEntities.forEach((entity) => entity.destroy());
     this.playerEntities.clear();
+
+    // Clean up joystick if scene is destroyed
+    if (this.joystick) {
+      this.joystick.destroy({ children: true });
+    }
   }
 }
