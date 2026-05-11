@@ -60,7 +60,7 @@ const sendChat = () => {
   width: 100%;
   max-width: 300px; 
   /* 1. Changed max-height to a fixed height so the box never pushes down */
-  height: 40vh; 
+  height: 10vh; 
   background: rgba(0,0,0,0.7); 
   border: 1px solid #444; 
   display: flex; 
