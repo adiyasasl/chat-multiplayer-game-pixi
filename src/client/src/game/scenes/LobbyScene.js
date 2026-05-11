@@ -5,7 +5,7 @@ import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
 import { TilingSprite, Texture } from "pixi.js";
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
-import { Viewport } from "pixi-viewport"; // Import the Viewport class
+import { Viewport as PixiViewport } from 'pixi-viewport';
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -21,12 +21,12 @@ export class LobbyScene {
     this.worldHeight = 2000;
 
     // --- SETUP THE VIEWPORT ---
-    this.viewport = new Viewport({
+    this.viewport = new PixiViewport({
         screenWidth: this.app.screen.width,
         screenHeight: this.app.screen.height,
         worldWidth: this.worldWidth,
         worldHeight: this.worldHeight,
-        events: this.app.renderer.events // Required for touch/mouse events
+        events: this.app.renderer.events
     });
     
     // Add the viewport to the main stage
