@@ -13,35 +13,17 @@ export class LobbyScene {
     this.localPlayerData = data.localPlayer;
     this.playerEntities = new Map();
     this.keys = new Set();
-    this.coins = []; 
-    
-    // --- ADD THIS: Define the World Size ---
-    this.worldWidth = 2000;
-    this.worldHeight = 2000;
-
-    // --- SETUP THE VIEWPORT ---
-    this.viewport = new Viewport({
-        screenWidth: this.app.screen.width,
-        screenHeight: this.app.screen.height,
-        worldWidth: this.worldWidth,
-        worldHeight: this.worldHeight,
-        events: this.app.renderer.events // Required for touch/mouse events
-    });
-    
-    // Add the viewport to the main stage
-    this.app.stage.addChild(this.viewport);
-
-    // Update the background to cover the whole WORLD, not just the screen
+    this.coins = [];
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
-      this.worldWidth,
-      this.worldHeight,
+      this.app.screen.width,
+      this.app.screen.height,
     );
-    // Add background to VIEWPORT, not stage
-    this.viewport.addChild(this.background);
 
     this.coinSpawnTimer = 0;
-    this.coinSpawnInterval = 500; 
+    this.coinSpawnInterval = 500;
+
+    // Joystick reference
     this.joystick = null;
 
     this.handleKeyDown = (e) => {
