@@ -21,7 +21,7 @@ export class CoinEntity {
     this.score = randomColor ? 10 : -5; // Yellow coins give +10, Red coins give -5
 
     // Speed of the coin
-    const speed = 3;
+    const speed = randomColor ? 3 : 10;
     this.vx = 0;
     this.vy = 0;
 
