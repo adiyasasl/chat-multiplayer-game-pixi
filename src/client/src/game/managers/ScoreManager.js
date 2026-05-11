@@ -8,11 +8,11 @@ export class ScoreManager {
   }
 
   addScore(amount) {
+    this.state.score += amount;
+    
     if (this.state.score < 0) {
       this.state.score = 0;
     }
-
-    this.state.score += amount;
   }
 
   getScore() {
