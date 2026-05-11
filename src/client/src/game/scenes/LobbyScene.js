@@ -5,7 +5,6 @@ import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
 import { TilingSprite, Texture } from "pixi.js";
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
-import * as ViewportPkg from 'pixi-viewport';
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -20,15 +19,13 @@ export class LobbyScene {
     this.worldWidth = 2000;
     this.worldHeight = 2000;
 
-    const PixiViewport = ViewportPkg.Viewport;
-
     // --- SETUP THE VIEWPORT ---
-    this.viewport = new PixiViewport({
+    this.viewport = new Viewport({
         screenWidth: this.app.screen.width,
         screenHeight: this.app.screen.height,
         worldWidth: this.worldWidth,
         worldHeight: this.worldHeight,
-        events: this.app.renderer.events
+        events: this.app.renderer.events // Required for touch/mouse events
     });
     
     // Add the viewport to the main stage
@@ -63,9 +60,6 @@ export class LobbyScene {
   async init() {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
-
-    // Keep the viewport inside the bounds of the world so you don't see the black void outside
-    this.viewport.clamp({ direction: 'all' });
 
     const activePlayers = await gqlClient.getPlayers();
     activePlayers.forEach((p) => {
@@ -130,8 +124,8 @@ export class LobbyScene {
     // Grab the axis data from the joystick
     const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
     
-    // --- UPDATE THIS: Pass the WORLD size instead of screen size to the player clamping ---
-    const bounds = { width: this.worldWidth, height: this.worldHeight };
+    // ADD THIS: Package the screen dimensions into an object
+    const bounds = { width: this.app.screen.width, height: this.app.screen.height };
 
     this.playerEntities.forEach((entity) => {
       // Pass 'bounds' as the 5th parameter
@@ -166,35 +160,24 @@ export class LobbyScene {
       entity.scoreManager.state.score = playerData.score;
     }
 
-    // --- UPDATE THIS: Add player to the VIEWPORT ---
-    this.viewport.addChild(entity.container);
-    
-    // --- ADD THIS: Tell the camera to follow the local player! ---
-    if (isLocal) {
-      this.viewport.follow(entity.container, {
-          speed: 10,       // Adjust for smooth camera lag
-          acceleration: 0.1,
-          radius: 50       // Let the player move 50px before camera starts adjusting
-      });
-    }
-
+    this.app.stage.addChild(entity.container);
     this.playerEntities.set(playerData.id, entity);
+    console.log(`Player ${playerData.username} has joined the lobby!`);
     entity.init();
   }
 
   spawnCoin() {
-    // --- UPDATE THIS: Coins now spawn randomly within the massive WORLD, not just the screen ---
-    const coin = new CoinEntity(this.worldWidth, this.worldHeight);
-    
-    // Add coin to VIEWPORT
-    this.viewport.addChild(coin.container);
+    const coin = new CoinEntity(this.app.screen.width, this.app.screen.height);
+    this.app.stage.addChild(coin.container);
     this.coins.push(coin);
   }
 
   spawnSpawner() {
-    const spawner = new SpawnerEntity(this.worldWidth, this.worldHeight);
-    // Add spawner to VIEWPORT
-    this.viewport.addChild(spawner.container);
+    const spawner = new SpawnerEntity(
+      this.app.screen.width,
+      this.app.screen.height,
+    );
+    this.app.stage.addChild(spawner.container);
   }
 
   removePlayer(playerId) {
