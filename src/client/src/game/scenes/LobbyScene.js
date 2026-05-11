@@ -3,7 +3,7 @@ import { CoinEntity } from "../entities/CoinEntity.js";
 import { SpawnerEntity } from "../entities/SpawnerEntity.js";
 import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
-import { TilingSprite, Texture, Container, Sprite } from "pixi.js"; // IMPORT Container
+import { TilingSprite, Texture, Container } from "pixi.js"; // IMPORT Container
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; 
 
 export class LobbyScene {
@@ -25,21 +25,14 @@ export class LobbyScene {
     this.mapWidth = 2000;
     this.mapHeight = 2000;
 
-    // this.background = new TilingSprite(
-    //   Texture.from("/assets/Gray.png"),
-    //   this.mapWidth,   // Make background span the whole map
-    //   this.mapHeight,
-    // );
-
-    this.background = new Sprite(
-      Texture.from("/assets/Gray.png")
+    this.background = new TilingSprite(
+      Texture.from("/assets/Gray.png"),
+      this.mapWidth,   // Make background span the whole map
+      this.mapHeight,
     );
-    
-    this.background.width = this.mapWidth;
-    this.background.height = this.mapHeight;
 
     // Add background to world
-    this.worldContainer.addChild(this.background);
+    // this.worldContainer.addChild(this.background);
 
     this.coinSpawnTimer = 0;
     this.coinSpawnInterval = 500;
@@ -59,6 +52,9 @@ export class LobbyScene {
   }
 
   async init() {
+    // Add the background to the absolute bottom (index 0) of the stage
+    this.app.stage.addChildAt(this.background, 0);
+    
     // Add containers to the main stage
     this.app.stage.addChild(this.worldContainer);
     this.app.stage.addChild(this.uiContainer);
