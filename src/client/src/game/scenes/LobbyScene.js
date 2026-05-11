@@ -3,8 +3,8 @@ import { CoinEntity } from "../entities/CoinEntity.js";
 import { SpawnerEntity } from "../entities/SpawnerEntity.js";
 import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
-import { TilingSprite, Texture } from "pixi.js";
-import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
+import { TilingSprite, Texture, Container } from "pixi.js"; // <-- Imported Container
+import { VirtualJoystick } from "../utils/VirtualJoystick.js";
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -13,17 +13,27 @@ export class LobbyScene {
     this.localPlayerData = data.localPlayer;
     this.playerEntities = new Map();
     this.keys = new Set();
-    this.coins = [];
+    this.coins = []; 
+    
+    // 1. Define the World Size
+    this.worldWidth = 2000;
+    this.worldHeight = 2000;
+
+    // 2. CREATE THE WORLD CONTAINER
+    // Everything IN the game goes here. UI goes on the stage.
+    this.world = new Container();
+    this.app.stage.addChild(this.world);
+
+    // Add background to the WORLD
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
-      this.app.screen.width,
-      this.app.screen.height,
+      this.worldWidth,
+      this.worldHeight,
     );
+    this.world.addChild(this.background);
 
     this.coinSpawnTimer = 0;
-    this.coinSpawnInterval = 500;
-
-    // Joystick reference
+    this.coinSpawnInterval = 500; 
     this.joystick = null;
 
     this.handleKeyDown = (e) => {
@@ -47,13 +57,20 @@ export class LobbyScene {
     activePlayers.forEach((p) => {
       this.spawnPlayer(p, p.id === this.localPlayerData.id);
     });
-    this.spawnCoin();
-    this.spawnSpawner();
+    this.spawnCoin(); 
+    this.spawnSpawner(); 
     this.updateVueHUD();
 
-    // Initialize Virtual Joystick
-    this.joystick = new VirtualJoystick(this.app, 60);
-    this.app.stage.addChild(this.joystick);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || navigator.maxTouchPoints > 0;
+
+    if (isMobile) {
+      console.log("Mobile device detected. Enabling virtual joystick.");
+      this.joystick = new VirtualJoystick(this.app, 60); 
+      // Joystick goes on the STAGE so it stays glued to the screen
+      this.app.stage.addChild(this.joystick); 
+    } else {
+      this.joystick = null;
+    }
 
     networkManager.connect(this.localPlayerData.id);
 
@@ -67,7 +84,7 @@ export class LobbyScene {
     networkManager.on("player_left", (data) => {
       this.removePlayer(data.playerId);
       this.updateVueHUD();
-      this.evaluateLeader(); // ADD THIS
+      this.evaluateLeader();
     });
 
     networkManager.on("player_moved", (data) => {
@@ -83,17 +100,32 @@ export class LobbyScene {
       const entity = this.playerEntities.get(data.playerId);
       if (entity && entity.scoreManager) {
         entity.scoreManager.state.score = data.score;
-        this.evaluateLeader(); // ADD THIS
+        this.evaluateLeader();
       }
     });
 
     this.app.ticker.add(this.updateLoop);
   }
 
-  sendChat(text) {
-    if (networkManager.ws && networkManager.ws.readyState === WebSocket.OPEN) {
-      networkManager.ws.send(JSON.stringify({ type: "chat", text }));
-    }
+  evaluateLeader() {
+    let highestScore = 0;
+    let leaderId = null;
+
+    this.playerEntities.forEach((entity) => {
+      const score = entity.scoreManager ? entity.scoreManager.state.score : 0;
+      if (score > highestScore && score > 0) {
+        highestScore = score;
+        leaderId = entity.id;
+      }
+    });
+
+    this.playerEntities.forEach((entity) => {
+      if (entity.id === leaderId && leaderId !== null) {
+        if (entity.setCrown) entity.setCrown(true);
+      } else {
+        if (entity.setCrown) entity.setCrown(false);
+      }
+    });
   }
 
   update(ticker) {
@@ -103,14 +135,10 @@ export class LobbyScene {
       this.coinSpawnTimer = 0;
     }
 
-    // Grab the axis data from the joystick
     const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
-    
-    // ADD THIS: Package the screen dimensions into an object
-    const bounds = { width: this.app.screen.width, height: this.app.screen.height };
+    const bounds = { width: this.worldWidth, height: this.worldHeight };
 
     this.playerEntities.forEach((entity) => {
-      // Pass 'bounds' as the 5th parameter
       const didLocalMove = entity.update(ticker, this.keys, this.coins, axis, bounds);
 
       if (didLocalMove && networkManager.ws.readyState === WebSocket.OPEN) {
@@ -128,9 +156,31 @@ export class LobbyScene {
       const coin = this.coins[i];
       coin.update(ticker);
       if (coin.isDead) {
-        coin.destroy();
-        this.coins.splice(i, 1);
+        coin.destroy(); 
+        this.coins.splice(i, 1); 
       }
+    }
+
+    // --- 3. NATIVE CAMERA LOGIC ---
+    const localPlayer = this.playerEntities.get(this.localPlayerData.id);
+    
+    if (localPlayer) {
+      // Calculate where the world needs to move to center the player
+      let targetCameraX = (this.app.screen.width / 2) - localPlayer.container.x;
+      let targetCameraY = (this.app.screen.height / 2) - localPlayer.container.y;
+
+      // Calculate the boundaries so the camera doesn't show the void
+      const minCameraX = this.app.screen.width - this.worldWidth;
+      const minCameraY = this.app.screen.height - this.worldHeight;
+
+      // Clamp the camera (Math.max prevents it going too far right/down, Math.min prevents too far left/up)
+      targetCameraX = Math.max(minCameraX, Math.min(0, targetCameraX));
+      targetCameraY = Math.max(minCameraY, Math.min(0, targetCameraY));
+
+      // Apply a smooth Lerp so the camera slightly "drags" behind the player
+      const cameraSpeed = 0.1 * ticker.deltaTime;
+      this.world.x += (targetCameraX - this.world.x) * cameraSpeed;
+      this.world.y += (targetCameraY - this.world.y) * cameraSpeed;
     }
   }
 
@@ -142,24 +192,23 @@ export class LobbyScene {
       entity.scoreManager.state.score = playerData.score;
     }
 
-    this.app.stage.addChild(entity.container);
+    // Add to WORLD, not stage
+    this.world.addChild(entity.container);
     this.playerEntities.set(playerData.id, entity);
-    console.log(`Player ${playerData.username} has joined the lobby!`);
     entity.init();
   }
 
   spawnCoin() {
-    const coin = new CoinEntity(this.app.screen.width, this.app.screen.height);
-    this.app.stage.addChild(coin.container);
+    const coin = new CoinEntity(this.worldWidth, this.worldHeight);
+    // Add to WORLD, not stage
+    this.world.addChild(coin.container);
     this.coins.push(coin);
   }
 
   spawnSpawner() {
-    const spawner = new SpawnerEntity(
-      this.app.screen.width,
-      this.app.screen.height,
-    );
-    this.app.stage.addChild(spawner.container);
+    const spawner = new SpawnerEntity(this.worldWidth, this.worldHeight);
+    // Add to WORLD, not stage
+    this.world.addChild(spawner.container);
   }
 
   removePlayer(playerId) {
@@ -176,33 +225,10 @@ export class LobbyScene {
         id: e.id,
         username: e.username,
         scoreState: e.scoreManager ? e.scoreManager.state : { score: 0 },
-        isLocal: e.isLocal // <-- ADD THIS LINE
+        isLocal: e.isLocal 
       };
     });
     this.gameManager.callbacks.onPlayersUpdate(playersList);
-  }
-
-  evaluateLeader() {
-    let highestScore = 0;
-    let leaderId = null;
-
-    // 1. Find the highest score (Must be at least 1 point to get a crown!)
-    this.playerEntities.forEach((entity) => {
-      const score = entity.scoreManager ? entity.scoreManager.state.score : 0;
-      if (score > highestScore && score > 0) {
-        highestScore = score;
-        leaderId = entity.id;
-      }
-    });
-
-    // 2. Give the crown to the winner, take it from everyone else
-    this.playerEntities.forEach((entity) => {
-      if (entity.id === leaderId && leaderId !== null) {
-        entity.setCrown(true);
-      } else {
-        entity.setCrown(false);
-      }
-    });
   }
 
   destroy() {
@@ -212,8 +238,6 @@ export class LobbyScene {
     networkManager.disconnect();
     this.playerEntities.forEach((entity) => entity.destroy());
     this.playerEntities.clear();
-
-    // Clean up joystick if scene is destroyed
     if (this.joystick) {
       this.joystick.destroy({ children: true });
     }
