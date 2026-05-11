@@ -13,17 +13,35 @@ export class LobbyScene {
     this.localPlayerData = data.localPlayer;
     this.playerEntities = new Map();
     this.keys = new Set();
-    this.coins = [];
+    this.coins = []; 
+    
+    // --- ADD THIS: Define the World Size ---
+    this.worldWidth = 2000;
+    this.worldHeight = 2000;
+
+    // --- SETUP THE VIEWPORT ---
+    this.viewport = new Viewport({
+        screenWidth: this.app.screen.width,
+        screenHeight: this.app.screen.height,
+        worldWidth: this.worldWidth,
+        worldHeight: this.worldHeight,
+        events: this.app.renderer.events // Required for touch/mouse events
+    });
+    
+    // Add the viewport to the main stage
+    this.app.stage.addChild(this.viewport);
+
+    // Update the background to cover the whole WORLD, not just the screen
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
-      this.app.screen.width,
-      this.app.screen.height,
+      this.worldWidth,
+      this.worldHeight,
     );
+    // Add background to VIEWPORT, not stage
+    this.viewport.addChild(this.background);
 
     this.coinSpawnTimer = 0;
-    this.coinSpawnInterval = 500;
-
-    // Joystick reference
+    this.coinSpawnInterval = 500; 
     this.joystick = null;
 
     this.handleKeyDown = (e) => {
@@ -42,6 +60,9 @@ export class LobbyScene {
   async init() {
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("keyup", this.handleKeyUp);
+
+    // Keep the viewport inside the bounds of the world so you don't see the black void outside
+    this.viewport.clamp({ direction: 'all' });
 
     const activePlayers = await gqlClient.getPlayers();
     activePlayers.forEach((p) => {
@@ -106,8 +127,8 @@ export class LobbyScene {
     // Grab the axis data from the joystick
     const axis = this.joystick ? this.joystick.axis : { x: 0, y: 0 };
     
-    // ADD THIS: Package the screen dimensions into an object
-    const bounds = { width: this.app.screen.width, height: this.app.screen.height };
+    // --- UPDATE THIS: Pass the WORLD size instead of screen size to the player clamping ---
+    const bounds = { width: this.worldWidth, height: this.worldHeight };
 
     this.playerEntities.forEach((entity) => {
       // Pass 'bounds' as the 5th parameter
@@ -142,24 +163,35 @@ export class LobbyScene {
       entity.scoreManager.state.score = playerData.score;
     }
 
-    this.app.stage.addChild(entity.container);
+    // --- UPDATE THIS: Add player to the VIEWPORT ---
+    this.viewport.addChild(entity.container);
+    
+    // --- ADD THIS: Tell the camera to follow the local player! ---
+    if (isLocal) {
+      this.viewport.follow(entity.container, {
+          speed: 10,       // Adjust for smooth camera lag
+          acceleration: 0.1,
+          radius: 50       // Let the player move 50px before camera starts adjusting
+      });
+    }
+
     this.playerEntities.set(playerData.id, entity);
-    console.log(`Player ${playerData.username} has joined the lobby!`);
     entity.init();
   }
 
   spawnCoin() {
-    const coin = new CoinEntity(this.app.screen.width, this.app.screen.height);
-    this.app.stage.addChild(coin.container);
+    // --- UPDATE THIS: Coins now spawn randomly within the massive WORLD, not just the screen ---
+    const coin = new CoinEntity(this.worldWidth, this.worldHeight);
+    
+    // Add coin to VIEWPORT
+    this.viewport.addChild(coin.container);
     this.coins.push(coin);
   }
 
   spawnSpawner() {
-    const spawner = new SpawnerEntity(
-      this.app.screen.width,
-      this.app.screen.height,
-    );
-    this.app.stage.addChild(spawner.container);
+    const spawner = new SpawnerEntity(this.worldWidth, this.worldHeight);
+    // Add spawner to VIEWPORT
+    this.viewport.addChild(spawner.container);
   }
 
   removePlayer(playerId) {
