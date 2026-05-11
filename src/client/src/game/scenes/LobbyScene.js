@@ -20,7 +20,7 @@ export class LobbyScene {
     );
 
     this.coinSpawnTimer = 0;
-    this.coinSpawnInterval = 2000; // Time in milliseconds (2000ms = 2 seconds)
+    this.coinSpawnInterval = 500; // Time in milliseconds (500ms = 0.5 seconds)
 
     // UPDATED: Ignore input if the user is typing in the chat box!
     // (Like Unity's EventSystem.current.currentSelectedGameObject)
