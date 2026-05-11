@@ -5,6 +5,7 @@ import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
 import { TilingSprite, Texture } from "pixi.js";
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
+import { Viewport } from "pixi-viewport"; // Import the Viewport class
 
 export class LobbyScene {
   constructor(gameManager, data) {
