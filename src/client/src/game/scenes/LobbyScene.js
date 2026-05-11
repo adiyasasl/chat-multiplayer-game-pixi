@@ -53,7 +53,7 @@ export class LobbyScene {
 
     // Initialize Virtual Joystick
     this.joystick = new VirtualJoystick(60);
-    this.joystick.x = 100;
+    this.joystick.x = this.app.screen.width / 2;
     this.joystick.y = this.app.screen.height - 100;
     this.app.stage.addChild(this.joystick);
 
