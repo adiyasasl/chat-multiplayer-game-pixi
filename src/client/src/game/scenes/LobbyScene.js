@@ -52,9 +52,7 @@ export class LobbyScene {
     this.updateVueHUD();
 
     // Initialize Virtual Joystick
-    this.joystick = new VirtualJoystick(60);
-    this.joystick.x = this.app.screen.width / 2;
-    this.joystick.y = this.app.screen.height - 100;
+    this.joystick = new VirtualJoystick(this.app, 60);
     this.app.stage.addChild(this.joystick);
 
     networkManager.connect(this.localPlayerData.id);
