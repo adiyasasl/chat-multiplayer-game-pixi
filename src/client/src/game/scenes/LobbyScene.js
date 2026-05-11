@@ -176,6 +176,7 @@ export class LobbyScene {
         id: e.id,
         username: e.username,
         scoreState: e.scoreManager ? e.scoreManager.state : { score: 0 },
+        isLocal: e.isLocal // <-- ADD THIS LINE
       };
     });
     this.gameManager.callbacks.onPlayersUpdate(playersList);

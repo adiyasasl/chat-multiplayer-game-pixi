@@ -4,7 +4,7 @@
       <h3>Players Online ({{ players.length }})</h3>
       <ul>
         <li v-for="(p, index) in sortedPlayers" :key="p.id">
-          <span class="username">
+          <span class="username" :class="{ 'local-player': p.isLocal }">
             <span v-if="index === 0 && p.scoreState.score > 0">👑</span>
             {{ p.username }}
           </span>
@@ -16,19 +16,14 @@
 </template>
 
 <script setup>
-import { computed } from "vue"; // Import computed from Vue
+import { computed } from "vue";
 
 const props = defineProps({ players: Array });
 
-// Create a sorted version of the players array
 const sortedPlayers = computed(() => {
-  // We use [...props.players] to create a copy before sorting.
-  // Vue will throw a warning if you try to sort a prop directly!
   return [...props.players].sort((a, b) => {
     const scoreA = a.scoreState?.score || 0;
     const scoreB = b.scoreState?.score || 0;
-
-    // Sort descending (highest to lowest)
     return scoreB - scoreA;
   });
 });
@@ -62,9 +57,14 @@ li {
   display: flex;
   justify-content: space-between;
 }
+/* Default color for remote players */
 .username {
-  color: #00ffcc;
+  color: #ffffff; 
   font-weight: bold;
+}
+/* ADD THIS: Special color for the local player */
+.local-player {
+  color: #5bd3ff; 
 }
 .score {
   color: #fbff00;
