@@ -44,6 +44,10 @@ export class PlayerEntity {
     this.sheetIdle = null;
     this.animSprite = null;
     this.currentState = 'idle';
+
+    this.intervalScale = 1;
+    this.currentIntervalScale = 0;
+    this.collectCoin = false;
   }
 
   async init() {
@@ -104,6 +108,15 @@ export class PlayerEntity {
       let moveX = 0;
       let moveY = 0;
 
+      if (this.collectCoin) {
+        this.currentIntervalScale += 0.1 * ticker.deltaTime;
+        if (this.currentIntervalScale >= this.intervalScale) {
+          this.animSprite.scale.set(this.animSprite.scale.x + 0.3, this.animSprite.scale.y + 0.3);
+          this.currentIntervalScale = 0;
+          this.collectCoin = false;
+        }
+      }
+
       // 1. Check Keyboard Inputs
       if (keys.has('w') || keys.has('ArrowUp'))    moveY -= 1;
       if (keys.has('s') || keys.has('ArrowDown'))  moveY += 1;
@@ -142,6 +155,7 @@ export class PlayerEntity {
           const currentCoin = coins[i];
           
           if (Collision.checkCollision(this.container, currentCoin.getContainer())) {
+            this.collectCoin = true;
             this.animSprite.alpha = 0.5; 
             currentCoin.destroy(); 
             coins.splice(i, 1); 
@@ -168,7 +182,16 @@ export class PlayerEntity {
 
       return moved;
       
-    } else {
+    } 
+    else {
+      if (this.collectCoin) {
+        this.currentIntervalScale += 0.1 * ticker.deltaTime;
+        if (this.currentIntervalScale >= this.intervalScale) {
+          this.animSprite.scale.set(this.animSprite.scale.x + 0.3, this.animSprite.scale.y + 0.3);
+          this.currentIntervalScale = 0;
+          this.collectCoin = false;
+        }
+      }
       // Remote Player Lerping Logic
       const lerpSpeed = 0.15 * ticker.deltaTime;
       
