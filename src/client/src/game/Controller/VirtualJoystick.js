@@ -54,10 +54,10 @@ export class VirtualJoystick extends PIXI.Container {
         // Make the joystick visible
         this.ui.visible = true;
 
+        this.updateKnob();
+
         this.knob.position.set(0, 0);
         this.axis = { x: 0, y: 0 };
-
-        this.updateKnob();
     }
 
     onDragMove() {
