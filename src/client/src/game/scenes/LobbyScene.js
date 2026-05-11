@@ -30,6 +30,9 @@ export class LobbyScene {
       this.mapWidth,   // Make background span the whole map
       this.mapHeight,
     );
+
+    this.background.tileScale.set(0.5); // Adjust this to make the grid smaller or larger
+    
     // Add background to world
     this.worldContainer.addChild(this.background);
 
