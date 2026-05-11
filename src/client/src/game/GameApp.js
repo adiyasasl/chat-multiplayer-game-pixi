@@ -42,32 +42,39 @@ class GameApp {
     this.switchScene('login');
   }
 
-  // --- New Method: Handle Aspect Ratio Scaling ---
   resizeBackground() {
     if (!this.backgroundSprite || !this.app) return;
 
-    const screenWidth = this.app.screen.width;
-    const screenHeight = this.app.screen.height;
-
-    // Get the original dimensions of your background image
-    const textureWidth = this.backgroundSprite.texture.width;
-    const textureHeight = this.backgroundSprite.texture.height;
-
-    // Calculate how much we need to scale on each axis to fill the screen
-    const scaleX = screenWidth / textureWidth;
-    const scaleY = screenHeight / textureHeight;
-
-    // Use Math.max to ensure the background covers the entire screen (Cover method)
-    // If you want the whole image to always be visible (Contain method), use Math.min instead
-    const scale = Math.max(scaleX, scaleY);
-
-    // Apply the uniform scale
-    this.backgroundSprite.scale.set(scale);
-
-    // Keep the background perfectly centered in the window
-    this.backgroundSprite.x = screenWidth / 2;
-    this.backgroundSprite.y = screenHeight / 2;
+    this.backgroundSprite.width = 4000;
+    this.backgroundSprite.height = 4000;
   }
+
+  // --- New Method: Handle Aspect Ratio Scaling ---
+  // resizeBackground() {
+  //   if (!this.backgroundSprite || !this.app) return;
+
+  //   const screenWidth = this.app.screen.width;
+  //   const screenHeight = this.app.screen.height;
+
+  //   // Get the original dimensions of your background image
+  //   const textureWidth = this.backgroundSprite.texture.width;
+  //   const textureHeight = this.backgroundSprite.texture.height;
+
+  //   // Calculate how much we need to scale on each axis to fill the screen
+  //   const scaleX = screenWidth / textureWidth;
+  //   const scaleY = screenHeight / textureHeight;
+
+  //   // Use Math.max to ensure the background covers the entire screen (Cover method)
+  //   // If you want the whole image to always be visible (Contain method), use Math.min instead
+  //   const scale = Math.max(scaleX, scaleY);
+
+  //   // Apply the uniform scale
+  //   this.backgroundSprite.scale.set(scale);
+
+  //   // Keep the background perfectly centered in the window
+  //   this.backgroundSprite.x = screenWidth / 2;
+  //   this.backgroundSprite.y = screenHeight / 2;
+  // }
 
   async switchScene(sceneName, data = null) {
     if (this.currentSceneInstance) {
