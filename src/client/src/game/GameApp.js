@@ -21,24 +21,22 @@ class GameApp {
     await this.app.init({ background: '#1a1a2e', resizeTo: window });
     container.appendChild(this.app.canvas);
 
-    // --- Setup Global Background ---
-    const bgTexture = Assets.get('bg'); 
-    this.backgroundSprite = new Sprite(bgTexture);
+    // // --- Setup Global Background ---
+    // const bgTexture = Assets.get('bg'); 
+    // this.backgroundSprite = new Sprite(bgTexture);
     
-    // 1. Set anchor to the center of the sprite so it scales outward evenly
-    this.backgroundSprite.anchor.set(0.5);
+    // // 1. Set anchor to the center of the sprite so it scales outward evenly
+    // this.backgroundSprite.anchor.set(0.5);
     
     // this.app.stage.addChild(this.backgroundSprite);
 
-    container.appendChild(this.backgroundSprite); // Add the background sprite's view (canvas) to the container  
+    // // 2. Call our new resize function for the initial setup
+    // this.resizeBackground();
 
-    // 2. Call our new resize function for the initial setup
-    this.resizeBackground();
-
-    // 3. Listen for window resizes and update the background
-    window.addEventListener('resize', () => {
-        this.resizeBackground();
-    });
+    // // 3. Listen for window resizes and update the background
+    // window.addEventListener('resize', () => {
+    //     this.resizeBackground();
+    // });
     // ----------------------------------
 
     this.switchScene('login');
