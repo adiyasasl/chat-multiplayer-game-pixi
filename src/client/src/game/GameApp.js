@@ -28,7 +28,9 @@ class GameApp {
     // 1. Set anchor to the center of the sprite so it scales outward evenly
     this.backgroundSprite.anchor.set(0.5);
     
-    this.app.stage.addChild(this.backgroundSprite);
+    // this.app.stage.addChild(this.backgroundSprite);
+
+    container.appendChild(this.backgroundSprite); // Add the background sprite's view (canvas) to the container  
 
     // 2. Call our new resize function for the initial setup
     this.resizeBackground();
