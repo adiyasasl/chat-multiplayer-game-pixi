@@ -5,7 +5,7 @@ import { gqlClient } from "../managers/GraphQLClient.js";
 import { networkManager } from "../managers/NetworkManager.js";
 import { TilingSprite, Texture } from "pixi.js";
 import { VirtualJoystick } from "../Controller/VirtualJoystick.js"; // Adjust path if needed
-import { Viewport as PixiViewport } from 'pixi-viewport';
+import * as ViewportPkg from 'pixi-viewport';
 
 export class LobbyScene {
   constructor(gameManager, data) {
@@ -19,6 +19,8 @@ export class LobbyScene {
     // --- ADD THIS: Define the World Size ---
     this.worldWidth = 2000;
     this.worldHeight = 2000;
+
+    const PixiViewport = ViewportPkg.Viewport;
 
     // --- SETUP THE VIEWPORT ---
     this.viewport = new PixiViewport({
