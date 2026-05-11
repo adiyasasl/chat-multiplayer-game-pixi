@@ -51,7 +51,7 @@ const sendChat = () => {
   /* 1. Use flexbox to push the chat to the bottom left naturally */
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: flex-start;
   /* 2. Replace absolute left/bottom with padding */
   padding: 20px;
