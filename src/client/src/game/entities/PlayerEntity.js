@@ -45,9 +45,10 @@ export class PlayerEntity {
     this.animSprite = null;
     this.currentState = 'idle';
 
-    this.intervalScale = 100;
-    this.currentIntervalScale = 0;
-    this.collectCoin = false;
+    // --- ADD THIS FOR JUICE ---
+    this.baseScale = 2; // Your default sprite scale
+    this.juiceTimer = 0; // Tracks the animation time
+    this.juiceDuration = 150; // How long the pop lasts in milliseconds
   }
 
   async init() {
@@ -127,26 +128,49 @@ export class PlayerEntity {
         moveY = joystickAxis.y;
       }
 
-      // 3. Apply Movement
+      // 3. Calculate Juice Scale
+      // ----------------------------------------------------
+      let currentScale = this.baseScale;
+      
+      if (this.juiceTimer > 0) {
+        this.juiceTimer -= ticker.deltaMS;
+        
+        // Calculate progress from 1 (start) down to 0 (end)
+        const progress = Math.max(0, this.juiceTimer / this.juiceDuration);
+        
+        // This makes the scale jump up by 1.0 (to 3.0), then smoothly shrink back to 2.0
+        currentScale = this.baseScale + (progress * 1.0); 
+      }
+      // ----------------------------------------------------
+
+      // 4. Apply Movement & Visuals
       if (moveX !== 0 || moveY !== 0) {
         this.container.x += moveX * this.speed;
         this.container.y += moveY * this.speed;
         moved = true;
 
-        // Flip the sprite based on x direction
-        if (moveX < 0) this.animSprite.scale.set(-2, 2);
-        if (moveX > 0) this.animSprite.scale.set(2, 2);
+        // Flip the sprite direction based on movement, using currentScale!
+        if (moveX < 0) this.animSprite.scale.set(-currentScale, currentScale);
+        if (moveX > 0) this.animSprite.scale.set(currentScale, currentScale);
+      } else {
+        // If not moving, keep the current facing direction but apply the juice scale
+        const facingLeft = this.animSprite.scale.x < 0;
+        this.animSprite.scale.set(facingLeft ? -currentScale : currentScale, currentScale);
       }
 
       this.animSprite.alpha = 1.0; 
 
-      // 4. Handle Coin Collisions
+      // 5. Handle Coin Collisions
       if (coins && coins.length > 0) {
         for (let i = 0; i < coins.length; i++) {
           const currentCoin = coins[i];
           
           if (Collision.checkCollision(this.container, currentCoin.getContainer())) {
-            this.animSprite.alpha = 0.5; 
+            
+            // --- TRIGGER JUICE HERE ---
+            this.juiceTimer = this.juiceDuration; 
+            // --------------------------
+
             currentCoin.destroy(); 
             coins.splice(i, 1); 
             this.scoreManager.addScore(currentCoin.getScore()); 
@@ -163,21 +187,11 @@ export class PlayerEntity {
         }
       }
 
-      // 5. Update Animation State
+      // 6. Update Animation State
       if (moved) {
         this.setAnimation('walk');
       } else {
         this.setAnimation('idle');
-      }
-
-      if (this.collectCoin) {
-        this.currentIntervalScale += ticker.deltaTime;
-        this.animSprite.scale.set(this.animSprite.scale.x, this.animSprite.scale.y + 0.1);
-        
-        if (this.currentIntervalScale >= this.intervalScale) {
-          this.collectCoin = false;
-          this.currentIntervalScale = 0;
-        }
       }
 
       return moved;
@@ -192,8 +206,9 @@ export class PlayerEntity {
       this.container.x += dx * lerpSpeed;
       this.container.y += dy * lerpSpeed;
 
-      if (dx > 0.5) this.animSprite.scale.set(2, 2);
-      if (dx < -0.5) this.animSprite.scale.set(-2, 2);
+      // Make sure remote players don't override their own scale if you want them to pop later
+      if (dx > 0.5) this.animSprite.scale.set(this.baseScale, this.baseScale);
+      if (dx < -0.5) this.animSprite.scale.set(-this.baseScale, this.baseScale);
 
       const distSq = (dx * dx) + (dy * dy);
       
