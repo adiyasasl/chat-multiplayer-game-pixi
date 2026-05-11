@@ -18,7 +18,7 @@ export class CoinEntity {
     this.screenHeight = screenHeight;
     this.isDead = false; // Flag to tell the LobbyScene to delete this
 
-    this.score = 10;
+    this.score = randomColor ? 10 : -5; // Yellow coins give +10, Red coins give -5
 
     // Speed of the coin
     const speed = 3;
