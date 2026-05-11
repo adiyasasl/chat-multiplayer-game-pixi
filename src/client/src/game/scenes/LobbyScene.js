@@ -27,8 +27,8 @@ export class LobbyScene {
 
     this.background = new TilingSprite(
       Texture.from("/assets/Gray.png"),
-      this.mapWidth,   // Make background span the whole map
-      this.mapHeight,
+      this.app.screen.width,   // Make background span the whole map
+      this.app.screen.height,
     );
 
     // Add background to world
@@ -54,7 +54,7 @@ export class LobbyScene {
   async init() {
     // Add the background to the absolute bottom (index 0) of the stage
     this.app.stage.addChildAt(this.background, 0);
-    
+
     // Add containers to the main stage
     this.app.stage.addChild(this.worldContainer);
     this.app.stage.addChild(this.uiContainer);
