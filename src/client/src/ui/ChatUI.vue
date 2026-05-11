@@ -48,24 +48,19 @@ const sendChat = () => {
   position: absolute; 
   inset: 0; 
   pointer-events: none; 
-  /* 1. Use flexbox to push the chat to the bottom left naturally */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: flex-start; 
   align-items: flex-start;
-  /* 2. Replace absolute left/bottom with padding */
   padding: 20px;
-  /* 3. Account for modern smartphone home bars (iOS safe area) */
-  padding-bottom: calc(20px + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
 .chat-panel { 
-  /* 4. Make it responsive: fill up to 300px, but shrink if screen is tiny */
   width: 100%;
   max-width: 300px; 
-  /* 5. Prevent chat from covering the whole screen on landscape mobile */
-  max-height: 40vh; 
+  /* 1. Changed max-height to a fixed height so the box never pushes down */
+  height: 40vh; 
   background: rgba(0,0,0,0.7); 
   border: 1px solid #444; 
   display: flex; 
@@ -74,9 +69,9 @@ const sendChat = () => {
 }
 
 .messages { 
-  /* 6. Change fixed height to flex so it fills the panel dynamically */
   flex: 1; 
-  min-height: 100px;
+  /* 2. CRUCIAL FIX: This forces the scrollbar to appear instead of breaking the layout */
+  min-height: 0; 
   overflow-y: auto; 
   padding: 10px; 
   font-family: monospace; 
@@ -91,7 +86,6 @@ const sendChat = () => {
 .text { color: #fff; }
 
 input { 
-  /* 7. Prevent the input field from ever squishing */
   flex-shrink: 0; 
   background: rgba(0,0,0,0.9); 
   border: none; 
