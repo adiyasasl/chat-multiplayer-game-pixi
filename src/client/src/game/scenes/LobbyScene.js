@@ -54,7 +54,7 @@ export class LobbyScene {
 
   async init() {
     // Add the background to the absolute bottom (index 0) of the stage
-    this.app.stage.addChildAt(this.background, 3);
+    this.app.stage.addChildAt(this.background, 0);
 
     // Add containers to the main stage
     this.app.stage.addChild(this.worldContainer);
