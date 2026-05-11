@@ -8,7 +8,10 @@ export class CoinEntity {
 
     this.style = new Graphics();
     this.style.circle(0, 0, 10);
-    this.style.fill('#fbff00ff');
+
+    const randomColor = Math.random() >= 0.5;
+
+    this.style.fill(randomColor ? "#fbff00ff" : "#ff0000ff");
     this.container.addChild(this.style);
 
     this.screenWidth = screenWidth;
@@ -18,7 +21,7 @@ export class CoinEntity {
     this.score = 10;
 
     // Speed of the coin
-    const speed = 3; 
+    const speed = 3;
     this.vx = 0;
     this.vy = 0;
 
@@ -26,19 +29,23 @@ export class CoinEntity {
     const border = Math.floor(Math.random() * 4);
 
     // Spawn slightly off-screen (-15) so it smoothly slides into view
-    if (border === 0) { // Top
+    if (border === 0) {
+      // Top
       this.container.x = Math.random() * screenWidth;
       this.container.y = -15;
       this.vy = speed; // Move down
-    } else if (border === 1) { // Right
+    } else if (border === 1) {
+      // Right
       this.container.x = screenWidth + 15;
       this.container.y = Math.random() * screenHeight;
       this.vx = -speed; // Move left
-    } else if (border === 2) { // Bottom
+    } else if (border === 2) {
+      // Bottom
       this.container.x = Math.random() * screenWidth;
       this.container.y = screenHeight + 15;
       this.vy = -speed; // Move up
-    } else if (border === 3) { // Left
+    } else if (border === 3) {
+      // Left
       this.container.x = -15;
       this.container.y = Math.random() * screenHeight;
       this.vx = speed; // Move right
@@ -53,9 +60,9 @@ export class CoinEntity {
 
     // Check if it has fully left the screen on the opposite side (20px padding)
     if (
-      this.container.x < -20 || 
+      this.container.x < -20 ||
       this.container.x > this.screenWidth + 20 ||
-      this.container.y < -20 || 
+      this.container.y < -20 ||
       this.container.y > this.screenHeight + 20
     ) {
       this.isDead = true; // Mark for destruction
